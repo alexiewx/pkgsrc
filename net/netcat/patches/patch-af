@@ -1,6 +1,6 @@
 $NetBSD$
 
---- data/Makefile.orig	Thu Mar 21 07:14:44 1996
+--- data/Makefile.orig	Wed Mar 20 20:14:44 1996
 +++ data/Makefile
 @@ -1,10 +1,10 @@
  all:	data rservice xor
