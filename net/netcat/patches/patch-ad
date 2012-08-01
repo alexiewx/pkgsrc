@@ -92,16 +92,19 @@
  #ifdef SO_REUSEPORT	/* doesnt exist everywhere... */
    rr = setsockopt (nnetfd, SOL_SOCKET, SO_REUSEPORT, &x, sizeof (x));
    if (rr == -1)
-@@ -745,7 +760,7 @@ Linux is also still a loss at 1.3.x it looks like; the
+@@ -745,7 +760,11 @@ Linux is also still a loss at 1.3.x it looks like; the
  /* wrap connect inside a timer, and hit it */
    arm (1, o_wait);
    if (setjmp (jbuf) == 0) {
--    rr = connect (nnetfd, (SA *)remend, sizeof (SA));
++#ifndef MINIX
+     rr = connect (nnetfd, (SA *)remend, sizeof (SA));
++#else /* MINIX */
 +    rr = connect (nnetfd, (SA *)remend, sizeof (SAI));
++#endif /* MINIX */
    } else {				/* setjmp: connect failed... */
      rr = -1;
      errno = ETIMEDOUT;			/* fake it */
-@@ -822,8 +837,22 @@ int dolisten (rad, rp, lad, lp)
+@@ -822,8 +841,22 @@ int dolisten (rad, rp, lad, lp)
      x = sizeof (SA);		/* retval for recvfrom */
      arm (2, o_wait);		/* might as well timeout this, too */
      if (setjmp (jbuf) == 0) {	/* do timeout for initial connect */
@@ -124,16 +127,19 @@
  Debug (("dolisten/recvfrom ding, rr = %d, netbuf %s ", rr, bigbuf_net))
      } else
        goto dol_tmo;		/* timeout */
-@@ -839,7 +868,7 @@ Debug (("dolisten/recvfrom ding, rr = %d, netbuf %s ",
+@@ -839,7 +872,11 @@ Debug (("dolisten/recvfrom ding, rr = %d, netbuf %s ",
     different port on the other end won't show up and will cause ICMP errors.
     I guess that's what they meant by "connect".
     Let's try to remember what the "U" is *really* for, eh? */
--    rr = connect (nnetfd, (SA *)remend, sizeof (SA));
++#ifndef MINIX
+     rr = connect (nnetfd, (SA *)remend, sizeof (SA));
++#else
 +    rr = connect (nnetfd, (SA *)remend, sizeof (SAI));
++#endif /* MINIX */
      goto whoisit;
    } /* o_udpmode */
  
-@@ -897,7 +926,7 @@ dol_noop:
+@@ -897,7 +934,7 @@ dol_noop:
    x = sizeof (SA);
    rr = getsockname (nnetfd, (SA *) lclend, &x);
    if (rr < 0)
@@ -142,7 +148,7 @@
    strcpy (cp, inet_ntoa (lclend->sin_addr));
  
  /* now check out who it is.  We don't care about mismatched DNS names here,
-@@ -1216,6 +1245,18 @@ Debug (("got %d from the net, errno %d", rr, errno))
+@@ -1216,6 +1253,18 @@ Debug (("got %d from the net, errno %d", rr, errno))
  	if (rr <= 0) {			/* at end, or fukt, or ... */
  	  FD_CLR (0, ding1);		/* disable and close stdin */
  	  close (0);
@@ -161,7 +167,7 @@
  	} else {
  	  rzleft = rr;
  	  zp = bigbuf_in;
-@@ -1314,10 +1355,6 @@ main (argc, argv)
+@@ -1314,10 +1363,6 @@ main (argc, argv)
    USHORT curport = 0;
    char * randports = NULL;
  
@@ -172,7 +178,7 @@
  /* I was in this barbershop quartet in Skokie IL ... */
  /* round up the usual suspects, i.e. malloc up all the stuff we need */
    lclend = (SAI *) Hmalloc (sizeof (SA));
-@@ -1354,7 +1391,8 @@ main (argc, argv)
+@@ -1354,7 +1399,8 @@ main (argc, argv)
      argv[1] = cp;			/* head of new arg block */
      fprintf (stderr, "Cmd line: ");
      fflush (stderr);		/* I dont care if it's unbuffered or not! */
@@ -182,7 +188,7 @@
      if (insaved <= 0)
        bail ("wrong");
      x = findline (cp, insaved);
-@@ -1389,12 +1427,14 @@ main (argc, argv)
+@@ -1389,12 +1435,14 @@ main (argc, argv)
  
  /* If your shitbox doesn't have getopt, step into the nineties already. */
  /* optarg, optind = next-argv-component [i.e. flag arg]; optopt = last-char */
@@ -198,7 +204,7 @@
  #ifdef GAPING_SECURITY_HOLE
        case 'e':				/* prog to exec */
  	pr00gie = optarg;
-@@ -1443,6 +1483,8 @@ main (argc, argv)
+@@ -1443,6 +1491,8 @@ main (argc, argv)
  	break;
        case 'r':				/* randomize various things */
  	o_random++; break;
@@ -207,7 +213,7 @@
        case 's':				/* local source address */
  /* do a full lookup [since everything else goes through the same mill],
     unless -n was previously specified.  In fact, careful placement of -n can
-@@ -1642,6 +1684,7 @@ options:");
+@@ -1642,6 +1692,7 @@ options:");
  	-e prog			program to exec after connect [dangerous!!]");
  #endif
    holler ("\
@@ -215,7 +221,7 @@
  	-g gateway		source-routing hop point[s], up to 8\n\
  	-G num			source-routing pointer: 4, 8, 12, ...\n\
  	-h			this cruft\n\
-@@ -1651,6 +1694,7 @@ options:");
+@@ -1651,6 +1702,7 @@ options:");
  	-o file			hex dump of traffic\n\
  	-p port			local port number\n\
  	-r			randomize local and remote ports\n\
