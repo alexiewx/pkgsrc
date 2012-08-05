@@ -1,11 +1,14 @@
 $NetBSD: patch-aa,v 1.3 2008/08/25 15:11:47 joerg Exp $
 
---- 915resolution.c.orig	2007-04-15 10:46:56.000000000 +0000
+--- 915resolution.c.orig	Sun Apr 15 10:46:56 2007
 +++ 915resolution.c
-@@ -22,11 +22,57 @@
+@@ -22,12 +22,89 @@
  #include <string.h>
  #include <sys/mman.h>
  #include <fcntl.h>
++#ifdef __minix
++#include <minix/syslib.h>
++#endif /* __minix */
 +#ifdef __linux__
  #include <sys/io.h>
 +#endif
@@ -28,13 +31,13 @@ $NetBSD: patch-aa,v 1.3 2008/08/25 15:11:47 joerg Exp $
 +	__asm volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 +	return data;
 +}
-+
+ 
 +static __inline void
 +asm_outb(uint8_t data, unsigned port)
 +{
 +	__asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 +}
-+
+ 
 +static uint32_t
 +asm_inl(unsigned port)
 +{
@@ -42,7 +45,7 @@ $NetBSD: patch-aa,v 1.3 2008/08/25 15:11:47 joerg Exp $
 +	__asm volatile("inl %w1,%0" : "=a" (data) : "d" (port));
 +	return data;
 +}
- 
++
 +static __inline void
 +asm_outl(uint32_t data, unsigned port)
 +{
@@ -57,10 +60,39 @@ $NetBSD: patch-aa,v 1.3 2008/08/25 15:11:47 joerg Exp $
 +#undef	outl
 +#define	inl asm_inl
 +#define	outl asm_outl
- 
++
++#ifdef __minix
++#undef outb
++#undef outl
++#undef inb
++#undef inl
++#undef iopl
++int iopl(int a) { return 0;}
++/* copied from rtl8139 */
++unsigned inb(u16_t port) {
++        u32_t value;
++        sys_inb(port, &value);
++        return value;
++}
++unsigned inl(u16_t port) {
++        u32_t value;
++        sys_inl(port, &value);
++        return value;
++}
++
++void outb(u8_t value, u16_t port) {
++        sys_outb(port, value);
++}
++void outl( u32_t value, u16_t port) {
++        sys_outl(port, value);
++}
++#endif /* __minix */
++
++
  #define NEW(a) ((a *)(calloc(1, sizeof(a))))
  #define FREE(a) (free(a))
-@@ -165,7 +211,12 @@ typedef struct {
+ 
+@@ -165,7 +242,12 @@ typedef struct {
  void initialize_system(char * filename) {
  
      if (!filename) {
@@ -73,3 +105,64 @@ $NetBSD: patch-aa,v 1.3 2008/08/25 15:11:47 joerg Exp $
              perror("Unable to obtain the proper IO permissions");
              exit(2);
          }
+@@ -313,9 +395,17 @@ vbios_map * open_vbios(char * filename, chipset_type f
+             exit(2);
+         }
+         
++#ifndef __minix        
+         map->bios_ptr = mmap(0, VBIOS_SIZE,
+                              PROT_READ | PROT_WRITE, MAP_SHARED,
+                              map->bios_fd, VBIOS_START);
++#else        
++        {
++            void * ptr = malloc(VBIOS_SIZE);
++            pread(map->bios_fd, ptr, VBIOS_SIZE, VBIOS_START);
++            map->bios_ptr = ptr;
++        }
++#endif
+         
+         if (map->bios_ptr == MAP_FAILED) {
+             if (map->chipset == CT_UNKWN) {
+@@ -336,9 +426,17 @@ vbios_map * open_vbios(char * filename, chipset_type f
+             exit(2);
+         }
+         
++#ifndef __minix        
+         map->bios_ptr = mmap(0, VBIOS_SIZE,
+                              PROT_READ | PROT_WRITE, MAP_SHARED,
+                              map->bios_fd, 0);
++#else        
++        {
++            void * ptr = malloc(VBIOS_SIZE);
++            pread(map->bios_fd, ptr, VBIOS_SIZE, 0);
++            map->bios_ptr = ptr;
++        }
++#endif
+         
+         if (map->bios_ptr == MAP_FAILED) {
+             if (map->chipset == CT_UNKWN) {
+@@ -479,7 +577,11 @@ void close_vbios(vbios_map * map) {
+         exit(2);
+     }
+ 
++#ifndef __minix 
+     munmap(map->bios_ptr, VBIOS_SIZE);
++#else /* __minix */
++    free(map->bios_ptr);
++#endif
+     close(map->bios_fd);
+ 
+     FREE(map);
+@@ -739,6 +841,12 @@ void set_mode(vbios_map * map, cardinal mode, cardinal
+             }
+         }
+     }
++#ifdef __minix
++    /* write out change to file */
++    /* FIXME: This may not work when filename was given */
++    lseek(map->bios_fd, VBIOS_START, SEEK_SET);
++    write(map->bios_fd, map->bios_ptr, VBIOS_SIZE);
++#endif
+ }   
+ 
+ void display_map_info(vbios_map * map) {
