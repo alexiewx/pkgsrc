@@ -14,7 +14,7 @@ PKG_DESTDIR_SUPPORT=	user-destdir
 
 ONLY_FOR_PLATFORM=	NetBSD-*-i386 NetBSD-*-x86_64 Linux-*-i386
 ONLY_FOR_PLATFORM+=	FreeBSD-*-i386 FreeBSD-*-x86_64 DragonFly-*-i386
-ONLY_FOR_PLATFORM+=	Minix-*-i386
+ONLY_FOR_PLATFORM+=	Minix-*-i386 # now it runs on Minix-386 too :-)
 
 USE_TOOLS+=	gmake
 
