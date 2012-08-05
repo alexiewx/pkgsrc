@@ -23,9 +23,6 @@ USE_TOOLS+=	gmake
 .if ${OPSYS} == "NetBSD"
 MAKE_ENV+=	LDLIBS=-l${MACHINE_ARCH}
 .endif
-.if ${OPSYS} == "Minix"
-MAKE_ENV+=	LDLIBS=-lsys
-.endif
 
 INSTALLATION_DIRS=	sbin share/doc/915resolution
 

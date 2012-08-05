@@ -3,5 +3,5 @@ $NetBSD: distinfo,v 1.4 2009/08/19 08:41:45 ghen Exp $
 SHA1 (915resolution-0.5.3.tar.gz) = 377a32d33f1987adf372341c8c6664d5673da9b8
 RMD160 (915resolution-0.5.3.tar.gz) = a406c6810bbfcf94c5352ea1b1e9178af4078589
 Size (915resolution-0.5.3.tar.gz) = 22583 bytes
-SHA1 (patch-aa) = 9e7aa5738048ccd9413d52bf637d139bbdb3d3a4
+SHA1 (patch-aa) = 90db619805b52bb4f40d99d9d9e4517140c9664f
 SHA1 (patch-ab) = 818d80b2170a540b401777fcdde8c39d0fdb9c69

@@ -1,6 +1,6 @@
 $NetBSD: patch-ab,v 1.2 2006/11/13 04:15:02 obache Exp $
 
---- Makefile.orig	2006-02-02 23:01:38.000000000 +0900
+--- Makefile.orig	Sun Apr 15 07:31:29 2007
 +++ Makefile
 @@ -1,9 +1,10 @@
  PRG=915resolution
